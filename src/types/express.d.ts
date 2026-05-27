@@ -9,5 +9,6 @@ declare global {
     }
   }
 }
+declare module "swagger-jsdoc";
 
 export {};
