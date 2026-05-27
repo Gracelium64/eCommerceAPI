@@ -7,6 +7,6 @@ export const validateParams =
     const parsed = schema.safeParse(req.params);
     if (!parsed.success)
       return next(new Error(parsed.error.message, { cause: { status: 400 } }));
-    req.params = parsed.data;
+    Object.assign(req.params, parsed.data as Record<string, unknown>);
     next();
   };

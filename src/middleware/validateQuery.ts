@@ -7,6 +7,6 @@ export const validateQuery =
     const parsed = schema.safeParse(req.query);
     if (!parsed.success)
       return next(new Error(parsed.error.message, { cause: { status: 400 } }));
-    req.query = parsed.data;
+    Object.assign(req.query, parsed.data as Record<string, unknown>);
     next();
   };
