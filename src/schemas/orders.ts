@@ -12,3 +12,10 @@ export const orderBodySchema = z.object({
   userId: idSchema,
   products: z.array(itemSchema).min(1),
 });
+
+// Optional: PATCH
+export const orderUpdateSchema = orderBodySchema
+  .partial()
+  .refine((data) => data.userId !== undefined || data.products !== undefined, {
+    message: "At least one field must be provided for update.",
+  });
