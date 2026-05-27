@@ -11,6 +11,11 @@ import {
   IS_PRODUCTION,
 } from "#config";
 
+const normalizeUser = (doc: any) => {
+  const { _id, __v, password, ...rest } = doc;
+  return { id: _id, ...rest };
+};
+
 const createTokens = async (userId: string, roles: string[]) => {
   const accessToken = jwt.sign({ roles }, ACCESS_JWT_SECRET, {
     subject: userId,
@@ -74,7 +79,7 @@ export const register: RequestHandler = async (req, res) => {
   res.status(201).json({
     message: "Registration successful.",
     accessToken,
-    user: safeUser,
+    user: normalizeUser(safeUser),
   });
 };
 
@@ -148,5 +153,5 @@ export const me: RequestHandler = async (req, res) => {
     throw new Error("User not found.", { cause: { status: 404 } });
   }
 
-  res.json({ user });
+  res.json({ user: normalizeUser(user) });
 };

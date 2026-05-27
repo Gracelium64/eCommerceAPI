@@ -6,6 +6,13 @@ type OrderItemInput = {
   quantity: number;
 };
 
+const normalize = (doc: any) => {
+  const { _id, __v, ...rest } = doc;
+  return { id: _id, ...rest };
+};
+
+const normalizeMany = (docs: any[]) => docs.map(normalize);
+
 const hasPrivilegedRole = (roles: string[]) =>
   roles.includes("admin") || roles.includes("manager");
 
@@ -18,6 +25,7 @@ const calculateOrderTotal = async (
   const products = await Product.find({
     _id: { $in: uniqueProductIds },
   }).lean();
+
   if (products.length !== uniqueProductIds.length) {
     throw new Error("One or more productIds do not exist.", {
       cause: { status: 400 },
@@ -69,9 +77,9 @@ export const getAllOrders: RequestHandler = async (req, res) => {
   const filter = hasPrivilegedRole(req.user.roles)
     ? {}
     : { userId: req.user.id };
-  const orders = await Order.find(filter).lean();
 
-  res.json(orders);
+  const orders = await Order.find(filter).lean();
+  res.json(normalizeMany(orders));
 };
 
 export const createOrder: RequestHandler = async (req, res) => {
@@ -111,7 +119,7 @@ export const getOrderById: RequestHandler = async (req, res) => {
   }
 
   ensureOrderAccess(req.user, order.userId);
-  res.json(order);
+  res.json(normalize(order));
 };
 
 export const updateOrder: RequestHandler = async (req, res) => {
@@ -121,14 +129,14 @@ export const updateOrder: RequestHandler = async (req, res) => {
     products: OrderItemInput[];
   };
 
-  const order = await Order.findById(id);
-  if (!order) {
+  const existingOrder = await Order.findById(id).lean();
+  if (!existingOrder) {
     throw new Error(`Order with id ${id} not found.`, {
       cause: { status: 404 },
     });
   }
 
-  ensureOrderAccess(req.user, order.userId);
+  ensureOrderAccess(req.user, existingOrder.userId);
 
   if (!req.user) throw new Error("Unauthorized", { cause: { status: 401 } });
   if (!hasPrivilegedRole(req.user.roles) && userId !== req.user.id) {

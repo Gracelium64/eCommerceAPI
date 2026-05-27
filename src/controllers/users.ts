@@ -3,9 +3,16 @@ import bcrypt from "bcrypt";
 import { User } from "#models";
 import { SALT_ROUNDS } from "#config";
 
+const normalize = (doc: any) => {
+  const { _id, __v, password, ...rest } = doc;
+  return { id: _id, ...rest };
+};
+
+const normalizeMany = (docs: any[]) => docs.map(normalize);
+
 export const getAllUsers: RequestHandler = async (_req, res) => {
   const users = await User.find().lean();
-  res.json(users);
+  res.json(normalizeMany(users));
 };
 
 export const createUser: RequestHandler = async (req, res) => {
@@ -29,7 +36,7 @@ export const createUser: RequestHandler = async (req, res) => {
   });
 
   const safeUser = await User.findById(user._id).lean();
-  res.status(201).json(safeUser);
+  res.status(201).json(safeUser ? normalize(safeUser) : null);
 };
 
 export const getUserById: RequestHandler = async (req, res) => {
@@ -42,7 +49,7 @@ export const getUserById: RequestHandler = async (req, res) => {
     });
   }
 
-  res.json(user);
+  res.json(normalize(user));
 };
 
 export const updateUser: RequestHandler = async (req, res) => {
@@ -77,7 +84,7 @@ export const updateUser: RequestHandler = async (req, res) => {
   await user.save();
 
   const safeUser = await User.findById(id).lean();
-  res.json(safeUser);
+  res.json(safeUser ? normalize(safeUser) : null);
 };
 
 export const deleteUser: RequestHandler = async (req, res) => {

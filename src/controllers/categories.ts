@@ -1,9 +1,16 @@
 import type { RequestHandler } from "express";
 import { Category } from "#models";
 
+const normalize = (doc: any) => {
+  const { _id, __v, ...rest } = doc;
+  return { id: _id, ...rest };
+};
+
+const normalizeMany = (docs: any[]) => docs.map(normalize);
+
 export const getAllCategories: RequestHandler = async (_req, res) => {
   const categories = await Category.find().lean();
-  res.json(categories);
+  res.json(normalizeMany(categories));
 };
 
 export const createCategory: RequestHandler = async (req, res) => {
@@ -19,7 +26,7 @@ export const getCategoryById: RequestHandler = async (req, res) => {
     throw new Error(`Category with id ${id} not found.`, { cause: { status: 404 } });
   }
 
-  res.json(category);
+  res.json(normalize(category));
 };
 
 export const updateCategory: RequestHandler = async (req, res) => {
@@ -34,7 +41,7 @@ export const updateCategory: RequestHandler = async (req, res) => {
     throw new Error(`Category with id ${id} not found.`, { cause: { status: 404 } });
   }
 
-  res.json(category);
+  res.json(normalize(category));
 };
 
 export const deleteCategory: RequestHandler = async (req, res) => {
